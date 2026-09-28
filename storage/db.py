@@ -206,7 +206,10 @@ class AcademicDatabase:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                g_contexts = [c.dict() if hasattr(c, "dict") else c for c in turn.grounding_contexts]
+                g_contexts = [
+                    c.model_dump() if hasattr(c, "model_dump") else (c.dict() if hasattr(c, "dict") else c)
+                    for c in turn.grounding_contexts
+                ]
                 cursor.execute("""
                     INSERT OR REPLACE INTO debate_turns (
                         turn_id, paper_id, round_number, speaker, argument_title,

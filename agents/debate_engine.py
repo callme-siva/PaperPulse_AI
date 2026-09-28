@@ -39,8 +39,8 @@ class MultiAgentDebateEngine:
         db.save_review(verdict)
 
         return {
-            "turns": [t.dict() for t in turns],
-            "review": verdict.dict()
+            "turns": [t.model_dump() if hasattr(t, "model_dump") else t.dict() for t in turns],
+            "review": verdict.model_dump() if hasattr(verdict, "model_dump") else verdict.dict()
         }
 
 debate_engine = MultiAgentDebateEngine()

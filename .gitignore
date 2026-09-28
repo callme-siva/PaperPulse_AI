@@ -26,3 +26,6 @@ ENV/
 .vscode/
 .idea/
 *.log
+.coverage
+.pytest_cache/
+
