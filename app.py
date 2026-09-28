@@ -37,11 +37,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ----------------- SIDEBAR CONTROLS -----------------
+# Apply Rubric Console styling
 apply_custom_theme()
 
+# ----------------- SIDEBAR CONTROLS -----------------
 with st.sidebar:
-    st.markdown("### Live arXiv Ingest Stream")
+    st.markdown("### 🛰️ Live arXiv Ingest Stream")
     cat_options = ["All"] + [c["code"] for c in DEFAULT_ARXIV_CATEGORIES]
     chosen_cat = st.selectbox("Category Stream", cat_options, index=0)
     fetch_count = st.slider("Submissions to Pull", min_value=2, max_value=12, value=4)
@@ -87,18 +88,50 @@ if not all_papers:
 # ----------------- MAIN TOPBAR -----------------
 render_topbar(all_papers)
 
-# ----------------- BENTO NAVIGATION COCKPIT TABS -----------------
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+# ----------------- STATEFUL NAVIGATION CONTROLS -----------------
+NAVIGATION_TABS = [
     "🎯 Submission Radar",
     "⚔️ Adversarial Debate Arena",
-    "🕸️ Citation Topology DAG",
+    "🕸️ Citation Lineage DAG",
     "📊 SOTA Benchmark Matrix",
     "📜 LaTeX Math Sandbox",
     "⚙️ Cockpit Health & Safety"
-])
+]
 
-# ----------------- TAB 1: SUBMISSION RADAR (BENTO GRID) -----------------
-with tab1:
+if "current_tab" not in st.session_state:
+    st.session_state["current_tab"] = "🎯 Submission Radar"
+
+if "active_paper_id" not in st.session_state and all_papers:
+    st.session_state["active_paper_id"] = all_papers[0]["paper_id"]
+
+# Ensure current tab is valid
+if st.session_state["current_tab"] not in NAVIGATION_TABS:
+    st.session_state["current_tab"] = "🎯 Submission Radar"
+
+current_tab_index = NAVIGATION_TABS.index(st.session_state["current_tab"])
+
+# Render interactive navigation pills
+selected_nav = st.pills(
+    "Cockpit Views",
+    NAVIGATION_TABS,
+    default=st.session_state["current_tab"],
+    label_visibility="collapsed",
+    key="nav_pills_selector"
+)
+
+if selected_nav and selected_nav != st.session_state["current_tab"]:
+    st.session_state["current_tab"] = selected_nav
+    st.rerun()
+
+current_tab = st.session_state["current_tab"]
+paper_dict = {p["paper_id"]: p for p in all_papers}
+paper_titles = {p["paper_id"]: f"[{p['paper_id']}] {p['title']}" for p in all_papers}
+active_id = st.session_state.get("active_paper_id", list(paper_dict.keys())[0] if paper_dict else "")
+
+# =========================================================================
+# TAB 1: SUBMISSION RADAR
+# =========================================================================
+if current_tab == "🎯 Submission Radar":
     col_search, col_filter = st.columns([3, 1])
     search_q = col_search.text_input("🔍 Filter submission radar by title, author, keyword, or architecture...", "")
     filter_cat = col_filter.selectbox("Category Filter", ["All"] + [c["code"] for c in DEFAULT_ARXIV_CATEGORIES], index=0)
@@ -109,7 +142,7 @@ with tab1:
         and (search_q.lower() in p.get("title", "").lower() or search_q.lower() in p.get("abstract", "").lower())
     ]
 
-    st.markdown(f"**Showing {len(filtered)} Active Submissions in Radar Deck**")
+    st.markdown(f"**Showing {len(filtered)} Active Submissions in Radar Deck** (Click any action button below to instantly load into the Arena or DAG)")
     
     # Bento Grid Layout (2-column responsive layout)
     for i in range(0, len(filtered), 2):
@@ -117,31 +150,51 @@ with tab1:
         for j in range(2):
             if i + j < len(filtered):
                 paper = filtered[i + j]
+                is_active = (paper["paper_id"] == active_id)
                 with cols[j]:
-                    render_paper_card(paper)
-                    col_b1, col_b2 = st.columns(2)
-                    if col_b1.button("⚔️ Load in Arena", key=f"btn_arena_{paper['paper_id']}", use_container_width=True):
+                    render_paper_card(paper, is_active=is_active)
+                    
+                    # Action buttons that programmatically jump to tabs
+                    col_b1, col_b2, col_b3 = st.columns(3)
+                    if col_b1.button("⚔️ Load in Arena", key=f"btn_arena_{paper['paper_id']}", use_container_width=True, type="primary" if is_active else "secondary"):
                         st.session_state["active_paper_id"] = paper["paper_id"]
+                        st.session_state["current_tab"] = "⚔️ Adversarial Debate Arena"
                         st.rerun()
-                    if col_b2.button("🕸️ View Ancestry DAG", key=f"btn_dag_{paper['paper_id']}", use_container_width=True):
+                    if col_b2.button("🕸️ Lineage DAG", key=f"btn_dag_{paper['paper_id']}", use_container_width=True):
                         st.session_state["active_paper_id"] = paper["paper_id"]
+                        st.session_state["current_tab"] = "🕸️ Citation Lineage DAG"
+                        st.rerun()
+                    if col_b3.button("📜 Math", key=f"btn_math_{paper['paper_id']}", use_container_width=True):
+                        st.session_state["active_paper_id"] = paper["paper_id"]
+                        st.session_state["current_tab"] = "📜 LaTeX Math Sandbox"
                         st.rerun()
 
-# ----------------- TAB 2: ADVERSARIAL DEBATE ARENA (SPLIT CAGE) -----------------
-with tab2:
-    st.markdown("### ⚔️ Adversarial Peer-Review Debate Arena")
-    st.caption("Cyclic Debate Protocol: Author Advocate 🧑‍🔬 battles Critical Reviewer 🕵️ with verifiable LaTeX grounding.")
+# =========================================================================
+# TAB 2: ADVERSARIAL DEBATE ARENA
+# =========================================================================
+elif current_tab == "⚔️ Adversarial Debate Arena":
+    col_hdr, col_back = st.columns([4, 1])
+    with col_hdr:
+        st.markdown("### ⚔️ Adversarial Peer-Review Debate Arena")
+        st.caption("Cyclic Debate Protocol: Author Advocate 🧑‍🔬 battles Critical Reviewer 🕵️ with verifiable LaTeX grounding.")
+    with col_back:
+        if st.button("← Back to Radar", use_container_width=True):
+            st.session_state["current_tab"] = "🎯 Submission Radar"
+            st.rerun()
 
-    paper_titles = {p["paper_id"]: f"[{p['paper_id']}] {p['title']}" for p in all_papers}
-    active_id = st.session_state.get("active_paper_id", list(paper_titles.keys())[0] if paper_titles else "")
-    
+    # Paper Switcher Dropdown
     selected_paper_id = st.selectbox(
-        "Select Submission Under Audit",
+        "Active Submission Under Review",
         list(paper_titles.keys()),
         format_func=lambda x: paper_titles.get(x, x),
-        index=list(paper_titles.keys()).index(active_id) if active_id in paper_titles else 0
+        index=list(paper_titles.keys()).index(active_id) if active_id in paper_titles else 0,
+        key="arena_paper_selector"
     )
     
+    if selected_paper_id != st.session_state.get("active_paper_id"):
+        st.session_state["active_paper_id"] = selected_paper_id
+        st.rerun()
+        
     current_paper = db.get_paper(selected_paper_id)
     
     if current_paper:
@@ -164,7 +217,7 @@ with tab2:
             col_cage, col_verdict = st.columns([3, 2])
             
             with col_cage:
-                st.markdown("##### Debate transcript & grounding evidence")
+                st.markdown("##### 💬 Debate Transcript & Grounding Evidence")
                 for turn in debate_result:
                     speaker = turn.get("speaker", "")
                     g_contexts = turn.get("grounding_contexts", [])
@@ -187,7 +240,7 @@ with tab2:
                                         st.latex(eq)
 
             with col_verdict:
-                st.markdown("##### Meta-reviewer verdict")
+                st.markdown("##### 🏛️ Meta-Reviewer Verdict")
                 score = review_result.get("overall_score", 8.0)
                 rec = review_result.get("recommendation", "Accept")
 
@@ -196,7 +249,7 @@ with tab2:
                 st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
                 render_metric_radar_chart(review_result)
 
-                st.markdown("###### Rubric breakdown")
+                st.markdown("###### 📊 Multi-Axis Rubric Breakdown")
                 col_r1, col_r2 = st.columns(2)
                 with col_r1:
                     render_rubric_cell("Novelty", review_result.get("novelty_score", 8.0), color="#7C9CFF")
@@ -205,7 +258,7 @@ with tab2:
                     render_rubric_cell("Empirical rigor", review_result.get("rigor_score", 8.0), color="#9FB0FF")
                     render_rubric_cell("Reproducibility", review_result.get("reproducibility_score", 8.5), color="#4ADE80")
 
-                with st.expander("Key strengths & weaknesses"):
+                with st.expander("🔍 Key Strengths & Weaknesses"):
                     st.markdown("**Strengths:**")
                     for s in review_result.get("strengths", []):
                         st.markdown(f"• {s}")
@@ -217,10 +270,33 @@ with tab2:
                         for q in review_result.get("open_questions", []):
                             st.markdown(f"• {q}")
 
-# ----------------- TAB 3: CITATION TOPOLOGY DAG -----------------
-with tab3:
-    st.markdown("### Citation lineage")
-    st.caption("Two-hop ancestry: direct precursor architectures, then their own foundational precursors.")
+# =========================================================================
+# TAB 3: CITATION TOPOLOGY DAG
+# =========================================================================
+elif current_tab == "🕸️ Citation Lineage DAG":
+    col_hdr, col_back = st.columns([4, 1])
+    with col_hdr:
+        st.markdown("### 🕸️ 2-Hop Architectural Citation Lineage DAG")
+        st.caption("Tracing foundational inspirations from precursor architectures to current breakthroughs.")
+    with col_back:
+        if st.button("← Back to Radar", use_container_width=True):
+            st.session_state["current_tab"] = "🎯 Submission Radar"
+            st.rerun()
+
+    # Paper Switcher Dropdown
+    selected_paper_id = st.selectbox(
+        "Active Paper for Citation Graph",
+        list(paper_titles.keys()),
+        format_func=lambda x: paper_titles.get(x, x),
+        index=list(paper_titles.keys()).index(active_id) if active_id in paper_titles else 0,
+        key="dag_paper_selector"
+    )
+    
+    if selected_paper_id != st.session_state.get("active_paper_id"):
+        st.session_state["active_paper_id"] = selected_paper_id
+        st.rerun()
+
+    current_paper = db.get_paper(selected_paper_id)
 
     if current_paper:
         st.markdown(f"**Ancestry graph for:** `{current_paper['title']}`")
@@ -235,9 +311,11 @@ with tab3:
         with col_l3:
             render_legend_chip("#8B90A0", "2-hop precursor")
 
-# ----------------- TAB 4: SOTA BENCHMARK MATRIX -----------------
-with tab4:
-    st.markdown("### SOTA benchmark matrix")
+# =========================================================================
+# TAB 4: SOTA BENCHMARK MATRIX
+# =========================================================================
+elif current_tab == "📊 SOTA Benchmark Matrix":
+    st.markdown("### 📊 SOTA Benchmark Matrix")
     st.caption("Extracted empirical benchmarks comparing reported scores against prior baselines across standardized datasets.")
 
     metrics = db.get_all_metrics()
@@ -264,10 +342,33 @@ with tab4:
     else:
         st.info("No benchmark metrics indexed yet.")
 
-# ----------------- TAB 5: LATEX MATH SANDBOX -----------------
-with tab5:
-    st.markdown("### 📜 LaTeX Math Sandbox & Formulation Inspector")
-    st.caption("Preserving exact LaTeX math environments (`\\begin{equation}`) without OCR or formatting degradation.")
+# =========================================================================
+# TAB 5: LATEX MATH SANDBOX
+# =========================================================================
+elif current_tab == "📜 LaTeX Math Sandbox":
+    col_hdr, col_back = st.columns([4, 1])
+    with col_hdr:
+        st.markdown("### 📜 LaTeX Math Sandbox & Formulation Inspector")
+        st.caption("Preserving exact LaTeX math environments (`\\begin{equation}`) without OCR or formatting degradation.")
+    with col_back:
+        if st.button("← Back to Radar", use_container_width=True):
+            st.session_state["current_tab"] = "🎯 Submission Radar"
+            st.rerun()
+
+    # Paper Switcher Dropdown
+    selected_paper_id = st.selectbox(
+        "Active Paper for LaTeX Inspector",
+        list(paper_titles.keys()),
+        format_func=lambda x: paper_titles.get(x, x),
+        index=list(paper_titles.keys()).index(active_id) if active_id in paper_titles else 0,
+        key="math_paper_selector"
+    )
+    
+    if selected_paper_id != st.session_state.get("active_paper_id"):
+        st.session_state["active_paper_id"] = selected_paper_id
+        st.rerun()
+
+    current_paper = db.get_paper(selected_paper_id)
     
     if current_paper:
         eqs = current_paper.get("equations", [])
@@ -281,8 +382,10 @@ with tab5:
         else:
             st.info("No explicit LaTeX math equations extracted for this paper yet.")
 
-# ----------------- TAB 6: COCKPIT HEALTH & SAFETY -----------------
-with tab6:
+# =========================================================================
+# TAB 6: COCKPIT HEALTH & SAFETY
+# =========================================================================
+elif current_tab == "⚙️ Cockpit Health & Safety":
     st.markdown("### ⚙️ Cockpit Health & Safety Maintenance")
     st.caption("Inspect live storage telemetry, database health, and manage system caches.")
     
