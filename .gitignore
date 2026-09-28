@@ -25,7 +25,9 @@ ENV/
 .DS_Store
 .vscode/
 .idea/
+.claude/
 *.log
 .coverage
 .pytest_cache/
+
 

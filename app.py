@@ -16,12 +16,17 @@ from ingestion.arxiv_client import arxiv_client
 from agents.debate_engine import debate_engine
 from graph.lineage_graph import citation_graph_engine
 from rag.vector_store import paper_vector_store
-from ui.theme_manager import apply_custom_theme, THEMES
+from ui.theme_manager import apply_custom_theme
 from ui.components import (
-    render_cockpit_topbar,
-    render_paper_bento_card,
+    render_topbar,
+    render_paper_card,
     render_metric_radar_chart,
-    render_rubric_meter
+    render_rubric_cell,
+    render_score_ring,
+    render_debate_turn,
+    render_legend_chip,
+    render_stat_tile,
+    style_benchmark_table,
 )
 
 # ----------------- PAGE CONFIG -----------------
@@ -33,17 +38,10 @@ st.set_page_config(
 )
 
 # ----------------- SIDEBAR CONTROLS -----------------
+apply_custom_theme()
+
 with st.sidebar:
-    st.markdown("### 🎛️ Cockpit Control Profile")
-    selected_theme = st.selectbox(
-        "Color Theme Profile",
-        list(THEMES.keys()),
-        index=0
-    )
-    apply_custom_theme(selected_theme)
-    
-    st.markdown("---")
-    st.markdown("### 🛰️ Live arXiv Ingest Stream")
+    st.markdown("### Live arXiv Ingest Stream")
     cat_options = ["All"] + [c["code"] for c in DEFAULT_ARXIV_CATEGORIES]
     chosen_cat = st.selectbox("Category Stream", cat_options, index=0)
     fetch_count = st.slider("Submissions to Pull", min_value=2, max_value=12, value=4)
@@ -86,8 +84,8 @@ if not all_papers:
     arxiv_client.fetch_recent_papers("cs.AI", max_results=5)
     all_papers = db.get_all_papers()
 
-# ----------------- MAIN COCKPIT HEADER -----------------
-render_cockpit_topbar(all_papers)
+# ----------------- MAIN TOPBAR -----------------
+render_topbar(all_papers)
 
 # ----------------- BENTO NAVIGATION COCKPIT TABS -----------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -120,7 +118,7 @@ with tab1:
             if i + j < len(filtered):
                 paper = filtered[i + j]
                 with cols[j]:
-                    render_paper_bento_card(paper)
+                    render_paper_card(paper)
                     col_b1, col_b2 = st.columns(2)
                     if col_b1.button("⚔️ Load in Arena", key=f"btn_arena_{paper['paper_id']}", use_container_width=True):
                         st.session_state["active_paper_id"] = paper["paper_id"]
@@ -166,24 +164,18 @@ with tab2:
             col_cage, col_verdict = st.columns([3, 2])
             
             with col_cage:
-                st.markdown("##### 💬 Adversarial Transcript & Grounding Evidence")
+                st.markdown("##### Debate transcript & grounding evidence")
                 for turn in debate_result:
                     speaker = turn.get("speaker", "")
-                    css_class = "arena-advocate-cage" if "Advocate" in speaker else "arena-critic-cage"
-                    avatar = "🧑‍🔬" if "Advocate" in speaker else "🕵️"
                     g_contexts = turn.get("grounding_contexts", [])
-                    
-                    st.markdown(f"""
-                    <div class="{css_class}">
-                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">
-                            {avatar} {speaker} (Round {turn.get('round_number', 1)}) — {turn.get('argument_title', '')}
-                        </div>
-                        <div style="font-size: 0.88rem; line-height: 1.55; color: #E2E8F0;">
-                            {turn.get('argument_text', '')}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
+
+                    render_debate_turn(
+                        speaker,
+                        turn.get("round_number", 1),
+                        turn.get("argument_title", ""),
+                        turn.get("argument_text", ""),
+                    )
+
                     if g_contexts:
                         with st.expander(f"🔗 View LaTeX Grounding Context ({len(g_contexts)} source spans)"):
                             for gc in g_contexts:
@@ -195,37 +187,25 @@ with tab2:
                                         st.latex(eq)
 
             with col_verdict:
-                st.markdown("##### 🏛️ Area Chair Meta-Review & Calibrated Rubric")
+                st.markdown("##### Meta-reviewer verdict")
                 score = review_result.get("overall_score", 8.0)
                 rec = review_result.get("recommendation", "Accept")
-                
-                # Area Chair Verdict Box
-                st.markdown(f"""
-                <div class="arena-verdict-deck">
-                    <div style="font-weight: 800; font-size: 1.15rem; color: #C084FC; margin-bottom: 4px;">
-                        🏛️ Meta-Reviewer Verdict: {rec}
-                    </div>
-                    <div style="font-size: 0.85rem; color: #94A3B8; margin-bottom: 10px;">
-                        Overall Calibrated Score: <span style="font-size: 1.25rem; font-weight: 800; color: #38BDF8;">{score:.1f} / 10.0</span>
-                    </div>
-                    <div style="font-size: 0.88rem; color: #CBD5E1; line-height: 1.5;">
-                        {review_result.get('executive_summary', '')}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Radar Chart
+
+                render_score_ring(score, rec, review_result.get("executive_summary", ""))
+
                 st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
                 render_metric_radar_chart(review_result)
-                
-                # Multi-Axis Calibrated Rubric Breakdown
-                st.markdown("###### 📊 Multi-Axis Rubric Breakdown")
-                render_rubric_meter("Novelty & Architectural Innovation", review_result.get("novelty_score", 8.0), color="#38BDF8")
-                render_rubric_meter("Empirical Rigor & Mathematical Soundness", review_result.get("rigor_score", 8.0), color="#818CF8")
-                render_rubric_meter("Baseline Fairness & FLOPs Alignment", review_result.get("baseline_fairness_score", 7.5), color="#F43F5E")
-                render_rubric_meter("Reproducibility & Open Artifacts", review_result.get("reproducibility_score", 8.5), color="#10B981")
-                
-                with st.expander("🔍 Key Strengths & Weaknesses"):
+
+                st.markdown("###### Rubric breakdown")
+                col_r1, col_r2 = st.columns(2)
+                with col_r1:
+                    render_rubric_cell("Novelty", review_result.get("novelty_score", 8.0), color="#7C9CFF")
+                    render_rubric_cell("Baseline fairness", review_result.get("baseline_fairness_score", 7.5), color="#E08A6F")
+                with col_r2:
+                    render_rubric_cell("Empirical rigor", review_result.get("rigor_score", 8.0), color="#9FB0FF")
+                    render_rubric_cell("Reproducibility", review_result.get("reproducibility_score", 8.5), color="#4ADE80")
+
+                with st.expander("Key strengths & weaknesses"):
                     st.markdown("**Strengths:**")
                     for s in review_result.get("strengths", []):
                         st.markdown(f"• {s}")
@@ -239,36 +219,48 @@ with tab2:
 
 # ----------------- TAB 3: CITATION TOPOLOGY DAG -----------------
 with tab3:
-    st.markdown("### 🕸️ 2-Hop Architectural Citation Lineage DAG")
-    st.caption("Tracing foundational inspirations from precursor architectures to current breakthroughs.")
-    
+    st.markdown("### Citation lineage")
+    st.caption("Two-hop ancestry: direct precursor architectures, then their own foundational precursors.")
+
     if current_paper:
-        st.markdown(f"**Ancestry Graph for:** `{current_paper['title']}`")
+        st.markdown(f"**Ancestry graph for:** `{current_paper['title']}`")
         html_graph = citation_graph_engine.build_lineage_graph(current_paper["paper_id"], current_paper["title"])
         components_html.html(html_graph, height=480)
-        
+
         col_l1, col_l2, col_l3 = st.columns(3)
-        col_l1.markdown("🟩 **Seed Submission (Focus Target)**")
-        col_l2.markdown("🟦 **1-Hop Direct Ancestor Papers**")
-        col_l3.markdown("🟪 **2-Hop Foundational Precursors**")
+        with col_l1:
+            render_legend_chip("#7C9CFF", "Seed submission")
+        with col_l2:
+            render_legend_chip("#4ADE80", "1-hop ancestor")
+        with col_l3:
+            render_legend_chip("#8B90A0", "2-hop precursor")
 
 # ----------------- TAB 4: SOTA BENCHMARK MATRIX -----------------
 with tab4:
-    st.markdown("### 📊 Structured SOTA Benchmark Matrix")
+    st.markdown("### SOTA benchmark matrix")
     st.caption("Extracted empirical benchmarks comparing reported scores against prior baselines across standardized datasets.")
-    
+
     metrics = db.get_all_metrics()
     if metrics:
         df = pd.DataFrame(metrics)
         available_datasets = ["All"] + sorted(list(set(df["dataset_name"].tolist())))
         selected_dataset = st.selectbox("Benchmark Dataset Filter", available_datasets, index=0)
-        
+
         if selected_dataset != "All":
             df = df[df["dataset_name"] == selected_dataset]
-            
+
+        col_s1, col_s2, col_s3 = st.columns(3)
+        with col_s1:
+            render_stat_tile("Benchmarks", str(len(df)))
+        with col_s2:
+            render_stat_tile("Datasets", str(df["dataset_name"].nunique()))
+        with col_s3:
+            avg_delta = df["delta"].mean() if len(df) else 0.0
+            render_stat_tile("Avg. gain (Δ)", f"{avg_delta:+.2f}")
+
         df_display = df[["paper_title", "dataset_name", "metric_name", "paper_score", "baseline_score", "delta"]].copy()
         df_display.columns = ["Paper Title", "Benchmark Dataset", "Metric", "Reported Score", "Baseline", "Gain (Δ)"]
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
+        st.markdown(style_benchmark_table(df_display).to_html(), unsafe_allow_html=True)
     else:
         st.info("No benchmark metrics indexed yet.")
 

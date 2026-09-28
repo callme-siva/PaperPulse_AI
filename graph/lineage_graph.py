@@ -11,9 +11,9 @@ class CitationLineageGraph:
             "id": seed_paper_id,
             "label": seed_title[:28] + "...",
             "title": f"<b>Seed Paper:</b> {seed_title}<br><b>ArXiv:</b> {seed_paper_id}",
-            "color": {"background": "#10B981", "border": "#34D399", "highlight": {"background": "#059669", "border": "#10B981"}},
+            "color": {"background": "#7C9CFF", "border": "#9FB0FF", "highlight": {"background": "#6B87E0", "border": "#7C9CFF"}},
             "size": 32,
-            "font": {"color": "#FFFFFF", "size": 13, "face": "Plus Jakarta Sans"}
+            "font": {"color": "#E7E9EE", "size": 13, "face": "Sora"}
         }]
         
         edges = []
@@ -43,23 +43,23 @@ class CitationLineageGraph:
         ])
 
         for anc in ancestors:
-            bg_color = "#3B82F6" if anc["hop"] == 1 else "#8B5CF6"
-            border_color = "#60A5FA" if anc["hop"] == 1 else "#A78BFA"
-            
+            bg_color = "#4ADE80" if anc["hop"] == 1 else "#8B90A0"
+            border_color = "#6EE7A0" if anc["hop"] == 1 else "#ABB0BE"
+
             nodes.append({
                 "id": anc["id"],
                 "label": anc["title"][:24] + "...",
                 "title": f"<b>{anc['title']}</b> ({anc['year']})<br>Citations: {anc['citations']:,}",
                 "color": {"background": bg_color, "border": border_color},
                 "size": 24 if anc["hop"] == 1 else 18,
-                "font": {"color": "#F1F5F9", "size": 11, "face": "Plus Jakarta Sans"}
+                "font": {"color": "#E7E9EE", "size": 11, "face": "Sora"}
             })
 
             if anc["hop"] == 1:
                 edges.append({
                     "from": anc["id"],
                     "to": seed_paper_id,
-                    "color": {"color": "#06B6D4", "highlight": "#22D3EE"},
+                    "color": {"color": "#7C9CFF", "highlight": "#9FB0FF"},
                     "width": 2,
                     "arrows": "to"
                 })
@@ -69,7 +69,7 @@ class CitationLineageGraph:
                 edges.append({
                     "from": anc["id"],
                     "to": target,
-                    "color": {"color": "#64748B"},
+                    "color": {"color": "#3A3F4D"},
                     "width": 1.5,
                     "dashes": True,
                     "arrows": "to"
@@ -84,10 +84,10 @@ class CitationLineageGraph:
           <style type="text/css">
             html, body {{
               margin: 0; padding: 0; width: 100%; height: 100%;
-              background-color: #0B0F19; overflow: hidden;
+              background-color: #181B24; overflow: hidden;
             }}
             #mynetwork {{
-              width: 100%; height: 440px; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px;
+              width: 100%; height: 440px; border: 1px solid #262A35; border-radius: 10px;
             }}
           </style>
         </head>
