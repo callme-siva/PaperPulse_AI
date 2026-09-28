@@ -98,7 +98,7 @@ with tab1:
 # ----------------- TAB 2: PEER-REVIEW ARENA -----------------
 with tab2:
     st.markdown("### ⚔️ Multi-Agent Adversarial Peer-Review Debate Arena")
-    st.caption("LangGraph Cyclic Debate: Author Advocate 🧑‍🔬 challenges Critical Reviewer 🕵️ before Meta-Reviewer ⚖️ synthesizes final decision.")
+    st.caption("LangGraph Cyclic Debate: Author Advocate 🧑‍🔬 challenges Critical Reviewer 🕵️ with verifiable LaTeX grounding.")
 
     paper_titles = {p["paper_id"]: f"[{p['paper_id']}] {p['title']}" for p in all_papers}
     active_id = st.session_state.get("active_paper_id", list(paper_titles.keys())[0] if paper_titles else "")
@@ -126,11 +126,13 @@ with tab2:
             col_turns, col_verdict = st.columns([3, 2])
             
             with col_turns:
-                st.markdown("##### 💬 Debate Transcript")
+                st.markdown("##### 💬 Provably Grounded Debate Transcript")
                 for turn in debate_result:
                     speaker = turn.get("speaker", "")
                     css_class = "debate-advocate" if "Advocate" in speaker else "debate-critic"
                     avatar = "🧑‍🔬" if "Advocate" in speaker else "🕵️"
+                    g_contexts = turn.get("grounding_contexts", [])
+                    
                     st.markdown(f"""
                     <div class="{css_class}">
                         <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;">
@@ -141,6 +143,16 @@ with tab2:
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    if g_contexts:
+                        with st.expander(f"🔗 View Retrieved Grounding Context ({len(g_contexts)} source spans)"):
+                            for gc in g_contexts:
+                                st.markdown(f"**Section:** `{gc.get('section_name', '')}` (Match Confidence: `{int(gc.get('similarity_score', 0.9)*100)}%`)")
+                                if gc.get("raw_latex_span"):
+                                    st.code(gc.get("raw_latex_span"), language="latex")
+                                if gc.get("equations"):
+                                    for eq in gc.get("equations", []):
+                                        st.latex(eq)
 
             with col_verdict:
                 st.markdown("##### ⚖️ Meta-Reviewer Scorecard")

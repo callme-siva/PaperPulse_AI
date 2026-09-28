@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from config import SQLITE_DB_PATH
-from models import RawPaper, ExtractedMetric, DebateTurn, ReviewVerdict
+from models import RawPaper, ExtractedMetric, DebateTurn, ReviewVerdict, RetrievedContext
 
 class AcademicDatabase:
     def __init__(self, db_path=SQLITE_DB_PATH):
@@ -51,11 +51,13 @@ class AcademicDatabase:
                     baseline_score REAL,
                     delta REAL,
                     compute_claim TEXT,
+                    source_context_id TEXT,
+                    source_latex_span TEXT,
                     FOREIGN KEY(paper_id) REFERENCES papers(paper_id)
                 )
             """)
 
-            # Multi-Agent Debate Turns table
+            # Multi-Agent Debate Turns table (with provable grounding context)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS debate_turns (
                     turn_id TEXT PRIMARY KEY,
@@ -66,6 +68,8 @@ class AcademicDatabase:
                     argument_text TEXT NOT NULL,
                     cited_section TEXT,
                     key_quote TEXT,
+                    grounding_contexts TEXT,
+                    cited_context_ids TEXT,
                     timestamp TEXT NOT NULL,
                     FOREIGN KEY(paper_id) REFERENCES papers(paper_id)
                 )
@@ -166,12 +170,13 @@ class AcademicDatabase:
                 cursor.execute("""
                     INSERT OR REPLACE INTO metrics (
                         metric_id, paper_id, dataset_name, metric_name, paper_score,
-                        baseline_name, baseline_score, delta, compute_claim
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        baseline_name, baseline_score, delta, compute_claim,
+                        source_context_id, source_latex_span
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     metric.metric_id, metric.paper_id, metric.dataset_name, metric.metric_name,
                     metric.paper_score, metric.baseline_name, metric.baseline_score,
-                    metric.delta, metric.compute_claim
+                    metric.delta, metric.compute_claim, metric.source_context_id, metric.source_latex_span
                 ))
                 conn.commit()
                 return True
@@ -201,15 +206,18 @@ class AcademicDatabase:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
+                g_contexts = [c.dict() if hasattr(c, "dict") else c for c in turn.grounding_contexts]
                 cursor.execute("""
                     INSERT OR REPLACE INTO debate_turns (
                         turn_id, paper_id, round_number, speaker, argument_title,
-                        argument_text, cited_section, key_quote, timestamp
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        argument_text, cited_section, key_quote, grounding_contexts,
+                        cited_context_ids, timestamp
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     turn.turn_id, turn.paper_id, turn.round_number, turn.speaker,
                     turn.argument_title, turn.argument_text, turn.cited_section,
-                    turn.key_quote, turn.timestamp
+                    turn.key_quote, json.dumps(g_contexts), json.dumps(turn.cited_context_ids),
+                    turn.timestamp
                 ))
                 conn.commit()
                 return True
@@ -221,7 +229,14 @@ class AcademicDatabase:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM debate_turns WHERE paper_id = ? ORDER BY round_number ASC, turn_id ASC", (paper_id,))
-            return [dict(r) for r in cursor.fetchall()]
+            rows = cursor.fetchall()
+            turns = []
+            for r in rows:
+                t = dict(r)
+                t["grounding_contexts"] = json.loads(t["grounding_contexts"]) if t["grounding_contexts"] else []
+                t["cited_context_ids"] = json.loads(t["cited_context_ids"]) if t["cited_context_ids"] else []
+                turns.append(t)
+            return turns
 
     # ------------------ REVIEW VERDICTS ------------------
     def save_review(self, review: ReviewVerdict) -> bool:

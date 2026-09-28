@@ -2,6 +2,15 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
+class RetrievedContext(BaseModel):
+    """Verifiable grounding context retrieved from the paper's LaTeX/PDF source."""
+    context_id: str
+    paper_id: str
+    section_name: str
+    raw_latex_span: str
+    similarity_score: float = 0.0
+    equations: List[str] = Field(default_factory=list)
+
 class RawPaper(BaseModel):
     """Represents an academic paper ingested from arXiv / Semantic Scholar."""
     paper_id: str
@@ -33,9 +42,11 @@ class ExtractedMetric(BaseModel):
     baseline_score: Optional[float] = None
     delta: Optional[float] = None
     compute_claim: Optional[str] = None
+    source_context_id: Optional[str] = None
+    source_latex_span: Optional[str] = None
 
 class DebateTurn(BaseModel):
-    """Single argument turn in the multi-agent peer-review debate."""
+    """Single argument turn in the multi-agent peer-review debate with provable grounding."""
     turn_id: str
     paper_id: str
     round_number: int
@@ -44,6 +55,8 @@ class DebateTurn(BaseModel):
     argument_text: str
     cited_section: Optional[str] = None
     key_quote: Optional[str] = None
+    grounding_contexts: List[RetrievedContext] = Field(default_factory=list)
+    cited_context_ids: List[str] = Field(default_factory=list)
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 class ReviewVerdict(BaseModel):
