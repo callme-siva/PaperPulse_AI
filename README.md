@@ -153,44 +153,51 @@ pytest -v --cov=. --cov-report=term-missing
 
 ```
 PaperPulse_AI/
+├── .streamlit/
+│   └── config.toml               # Streamlit theme & server configuration
 ├── agents/
-│   ├── advocate_agent.py         # Author Advocate Agent
-│   ├── critic_agent.py           # Critical Reviewer Agent
-│   ├── meta_reviewer.py          # Area Chair Meta-Reviewer
+│   ├── advocate_agent.py         # Author Advocate Agent (Novelty & LaTeX Grounding)
+│   ├── critic_agent.py           # Critical Reviewer Agent (Baselines & Compute Audits)
+│   ├── meta_reviewer.py          # Area Chair Meta-Reviewer (4-Axis Rubric Scorecard)
 │   └── debate_engine.py          # Cyclic Multi-Agent Debate Controller
 ├── ingestion/
-│   ├── arxiv_client.py           # ArXiv API & LaTeX Source Downloader
-│   ├── latex_parser.py           # Equation & Section Parser
+│   ├── arxiv_client.py           # ArXiv Atom API & Live Source Extractor
+│   ├── latex_parser.py           # AST Equation, Section & Table Parser
 │   └── semanticscholar_client.py # Citation Count & Reference DAG Client
 ├── rag/
-│   ├── embeddings.py             # Local SentenceTransformers (all-MiniLM-L6-v2)
-│   ├── vector_store.py           # ChromaDB Hierarchical Store
-│   └── llm_client.py             # Multi-Provider LLM Fallback (Gemini, OpenAI, Groq, Local)
+│   ├── embeddings.py             # SentenceTransformers (all-MiniLM-L6-v2) & Fallback
+│   ├── vector_store.py           # ChromaDB Hierarchical Vector Store (Cosine HNSW)
+│   └── llm_client.py             # Multi-Provider LLM Gateway (Gemini, OpenAI, Groq, Local)
 ├── graph/
-│   └── lineage_graph.py          # 2-Hop NetworkX + PyVis Citation DAG
+│   └── lineage_graph.py          # 2-Hop Citation Lineage DAG & Vis.js Physics Graph
 ├── storage/
-│   └── db.py                     # SQLite Database (Papers, Metrics, Debate Turns, Reviews)
+│   └── db.py                     # SQLite Relational Database (Papers, Metrics, Debates, Reviews)
 ├── ui/
-│   ├── components.py             # Radar Scorecard, Paper Cards, Debate Bubble Cards
-│   └── theme_manager.py          # Rubric Console Design System & Dynamic CSS
+│   ├── components.py             # Radar Scorecard, Paper Cards, SOTA Tables, Score Rings
+│   └── theme_manager.py          # 5-Palette Dynamic Theme Engine (Light Minimal, Dark Obsidian...)
 ├── tests/
-│   ├── conftest.py               # Pytest Fixtures & Temp DB / Vector Store
-│   ├── test_models.py            # Pydantic Model Validation Tests
-│   ├── test_storage.py           # SQLite CRUD Tests
-│   ├── test_latex_parser.py      # LaTeX Equation & Table Extraction Tests
-│   ├── test_ingestion.py         # arXiv & Semantic Scholar Ingestion Tests
-│   ├── test_rag.py               # Embeddings & ChromaDB Retrieval Tests
-│   ├── test_graph.py             # Citation Lineage DAG Generation Tests
-│   ├── test_agents.py            # Multi-Agent Debate Engine Tests
-│   └── test_ui.py                # UI Theme & Component Tests
+│   ├── conftest.py               # Pytest Fixtures & Temp Isolated DB/Vector Stores
+│   ├── test_models.py            # Pydantic v2 Schema & Validation Tests
+│   ├── test_storage.py           # SQLite CRUD & Relational Integrity Tests
+│   ├── test_latex_parser.py      # LaTeX AST Extraction & Fallback Tests
+│   ├── test_ingestion.py         # ArXiv & Semantic Scholar Ingestion Tests
+│   ├── test_rag.py               # MiniLM Embeddings & ChromaDB Retrieval Tests
+│   ├── test_graph.py             # Citation Lineage DAG Traversal Tests
+│   ├── test_agents.py            # Multi-Agent Debate Engine & Rubric Tests
+│   └── test_ui.py                # High-Contrast Themes & RAG Config Tests
 ├── docs/
-│   └── assets/                   # Architectural Diagrams & Showcase Banners
-├── app.py                        # Streamlit Interactive Research Studio
+│   └── assets/                   # Architectural Diagrams & Showcase UI Banners
+├── .env.example                  # Environment Variables & Provider Keys Template
+├── ARCHITECTURE.md               # System Architecture & High-Level Specifications
+├── DETAILED_ARCHITECTURE.md      # Box-by-Box Operational Deep Dive & State Machines
+├── DEPLOYMENT.md                 # Cloud Deployment Guide (Streamlit Cloud, Docker, VMs)
+├── OPERATIONS.md                 # Storage Maintenance & Health Operations Runbook
+├── app.py                        # Streamlit Interactive Research Cockpit Application
 ├── config.py                     # Global Configuration & Parameter Defaults
-├── models.py                     # Pydantic v2 Data Schemas
-├── pytest.ini                    # Pytest Configuration
-├── requirements.txt              # Pip Dependencies
-└── README.md                     # Documentation & Showcase
+├── models.py                     # Pydantic v2 Core Data Models & Schemas
+├── pytest.ini                    # Pytest Test Discovery Configuration
+├── requirements.txt              # Project Python Dependencies
+└── README.md                     # Project Documentation & Showcase
 ```
 
 ---
