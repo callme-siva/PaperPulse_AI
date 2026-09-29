@@ -6,16 +6,17 @@
 
 ### *Autonomous ArXiv Sourcing • Adversarial Peer-Review Committee • 2-Hop Citation Lineage DAG*
 
+[![Live Demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://paperpulse-studio.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-FF4B4B?logo=streamlit&logoColor=white)](https://paperpulse-studio.streamlit.app)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-green?logo=database&logoColor=white)](https://www.trychroma.com/)
 [![NetworkX](https://img.shields.io/badge/NetworkX-Citation_DAG-purple)](https://networkx.org/)
-[![Tests](https://img.shields.io/badge/pytest-37%2F37%20passing-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/pytest-39%2F39%20passing-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **A frontier AI research intelligence platform that autonomously monitors arXiv, extracts SOTA benchmarks into structured tables, pits adversarial AI agents in peer-review debates, and graphs the evolutionary lineage of deep learning architectures.**
 
-[🚀 Quickstart](#-quickstart--installation) • [🏛️ System Architecture](#️-system-architecture) • [⚔️ Peer-Review Arena](#️-adversarial-multi-agent-peer-review-arena) • [🕸️ Citation Lineage](#️-interactive-citation-lineage-dag) • [🧪 Testing](#-automated-testing--verification)
+[🌐 **Live Demo**](https://paperpulse-studio.streamlit.app) • [🚀 Quickstart](#-quickstart--installation) • [🏛️ System Architecture](#️-system-architecture) • [⚔️ Peer-Review Arena](#️-adversarial-multi-agent-peer-review-arena) • [🕸️ Citation Lineage](#️-interactive-citation-lineage-dag) • [🧪 Testing](#-automated-testing--verification)
 
 ---
 

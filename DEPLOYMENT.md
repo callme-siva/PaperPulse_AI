@@ -31,7 +31,8 @@ Streamlit Community Cloud provides **100% free hosting** with automatic CI/CD di
 | **Repository** | `callme-siva/PaperPulse_AI` *(or your fork)* |
 | **Branch** | `main` |
 | **Main file path** | `app.py` |
-| **App URL** *(Optional custom name)* | `paperpulse-ai.streamlit.app` |
+| **App URL** | `paperpulse-studio.streamlit.app` |
+| **Live Instance** | **[https://paperpulse-studio.streamlit.app](https://paperpulse-studio.streamlit.app)** |
 
 ### Step 3: Advanced Settings (Python Version & Secrets)
 Click **"Advanced settings"** before deploying:
