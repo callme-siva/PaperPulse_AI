@@ -36,4 +36,11 @@ python3 -c "from storage.db import db; from ingestion.arxiv_client import arxiv_
 
 ---
 
+## 4. Deployment Guides
+For production and cloud hosting instructions, see:
+* 🚀 **[Deployment Guide](file:///Users/siva/AI-codebase/PaperPulse_AI/DEPLOYMENT.md)** (Streamlit Community Cloud, Docker, Systemd, Nginx reverse proxy)
+* 🏛️ **[Detailed Architecture](file:///Users/siva/AI-codebase/PaperPulse_AI/DETAILED_ARCHITECTURE.md)** (Box-by-box technical reference)
+
+---
+
 *PaperPulse AI Operations Runbook.*

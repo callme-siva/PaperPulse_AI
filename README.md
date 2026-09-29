@@ -127,9 +127,10 @@ cd PaperPulse_AI
 pip install -r requirements.txt
 
 # 3. Launch the Research Studio
-streamlit run app.py
-```
 Open **`http://localhost:8501`** in your browser.
+
+> 🚀 **Deploying to Cloud?** Check out the step-by-step **[Deployment Guide](file:///Users/siva/AI-codebase/PaperPulse_AI/DEPLOYMENT.md)** for Streamlit Community Cloud (1-Click, Free), Docker, and VM hosting.  
+> 📖 **Deep Technical Specs?** Check out **[Detailed Architecture Specification](file:///Users/siva/AI-codebase/PaperPulse_AI/DETAILED_ARCHITECTURE.md)** for sequence diagrams, state machines, and mathematical scoring formulas.
 
 ---
 
