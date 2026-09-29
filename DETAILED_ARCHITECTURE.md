@@ -98,21 +98,21 @@ flowchart TB
         THEME_ENG --> VIEWS
     end
 
-    classDef source fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#F8FAFC;
-    classDef parse fill:#1E293B,stroke:#A855F7,stroke-width:2px,color:#F8FAFC;
-    classDef store fill:#1E293B,stroke:#10B981,stroke-width:2px,color:#F8FAFC;
-    classDef rag fill:#1E293B,stroke:#F59E0B,stroke-width:2px,color:#F8FAFC;
-    classDef agent fill:#1E293B,stroke:#EC4899,stroke-width:2px,color:#F8FAFC;
-    classDef graph fill:#1E293B,stroke:#6366F1,stroke-width:2px,color:#F8FAFC;
-    classDef ui fill:#1E293B,stroke:#06B6D4,stroke-width:2px,color:#F8FAFC;
+    classDef clsSource fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#F8FAFC;
+    classDef clsParse fill:#1E293B,stroke:#A855F7,stroke-width:2px,color:#F8FAFC;
+    classDef clsStore fill:#1E293B,stroke:#10B981,stroke-width:2px,color:#F8FAFC;
+    classDef clsRAG fill:#1E293B,stroke:#F59E0B,stroke-width:2px,color:#F8FAFC;
+    classDef clsAgent fill:#1E293B,stroke:#EC4899,stroke-width:2px,color:#F8FAFC;
+    classDef clsGraph fill:#1E293B,stroke:#6366F1,stroke-width:2px,color:#F8FAFC;
+    classDef clsUI fill:#1E293B,stroke:#06B6D4,stroke-width:2px,color:#F8FAFC;
 
-    class ARX,TAR,SEM,SEED source;
-    class AST_MATH,AST_SEC,AST_TAB,HEUR_METRIC parse;
-    class EMB,CHROMA,SQL store;
-    class LLM_GW,RET_CTX rag;
-    class ADV,CRI,META agent;
-    class DAG_ENG,VIS_JS graph;
-    class NAV_STATE,THEME_ENG,VIEWS ui;
+    class ARX,TAR,SEM,SEED clsSource;
+    class AST_MATH,AST_SEC,AST_TAB,HEUR_METRIC clsParse;
+    class EMB,CHROMA,SQL clsStore;
+    class LLM_GW,RET_CTX clsRAG;
+    class ADV,CRI,META clsAgent;
+    class DAG_ENG,VIS_JS clsGraph;
+    class NAV_STATE,THEME_ENG,VIEWS clsUI;
 ```
 
 ---
@@ -350,7 +350,7 @@ $$\text{Recommendation} = \begin{cases}
 * **Class**: `CitationLineageGraph`
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Hop2["Hop 2: Foundational Precursors (Ancestral Roots)"]
         H2A["HiPPO: Recurrent Memory with Optimal Polynomial Projections (2020)\n[Citations: 620]"]
         H2B["Attention Is All You Need (2017)\n[Citations: 125,000]"]
