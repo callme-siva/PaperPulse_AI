@@ -2,14 +2,18 @@
 
 ### Autonomous Multi-Agent Academic Paper Discovery, Adversarial Peer-Review & Lineage Graph
 
+> 💡 **Looking for the deep-dive technical guide?**  
+> Check out [`DETAILED_ARCHITECTURE.md`](file:///Users/siva/AI-codebase/PaperPulse_AI/DETAILED_ARCHITECTURE.md) for complete box-by-box operational mechanics, sequence diagrams, regex AST patterns, and state machine transitions.
+
 ---
 
 ## 1. Executive Summary & Problem Formulation
 
-Academic research in machine learning has reached a throughput exceeding 2,500 arXiv papers weekly. Standard LLM-based paper summarizers fail due to three fundamental limitations:
-1. **Lossy PDF Parsing**: Multi-column PDF extractors scramble tables, math notations, and equations.
+Academic research in machine learning has reached a throughput exceeding 2,500 arXiv papers weekly. Standard LLM-based paper summarizers fail due to four fundamental limitations:
+1. **Lossy PDF Parsing**: Multi-column PDF extractors scramble tables, inline notations, and equations into broken text.
 2. **Uncalibrated Hallucinations**: Standard chat models accept paper claims uncritically without probing baseline fairness or compute FLOPs.
-3. **Missing Architectural Lineage**: Failure to trace conceptual ancestry across foundational precursors.
+3. **Missing Architectural Lineage**: Failure to trace conceptual ancestry across 2-hop foundational precursors.
+4. **Lack of Verifiable Provenance**: Summaries lack line-level mathematical grounding back to source LaTeX.
 
 **PaperPulse AI** resolves this via a multi-agent peer-review architecture powered by **raw LaTeX extraction**, **cyclic adversarial debate**, and **interactive 2-hop citation DAGs**.
 
@@ -24,6 +28,7 @@ flowchart TB
         TAR["📦 Raw LaTeX Tarball Extractor (.tar.gz)"]
         SEM["📚 Semantic Scholar API (Citation DAGs)"]
         ARX --> TAR
+        ARX --> SEM
     end
 
     subgraph Parsing["2. Academic Parsing Core"]
@@ -56,10 +61,10 @@ flowchart TB
     subgraph Storage["5. Dual-Store Persistence"]
         VDB[("ChromaDB Vector Store (Chunks + Math)")]
         SQL[("SQLite Database (Papers, Metrics, Debates, Reviews)")]
-        DAG_STORE[("NetworkX Citation DAG (2-Hop Radius)")]
+        DAG_STORE[("NetworkX / Vis.js Citation DAG (2-Hop Radius)")]
     end
 
-    subgraph UI["6. Streamlit Research Studio"]
+    subgraph UI["6. Streamlit Research Cockpit"]
         STUDIO["🖥️ Interactive UI (Radar Charts, Debate Player, Lineage Graph)"]
     end
 
@@ -83,11 +88,17 @@ The Area Chair Meta-Reviewer computes the final verdict using a weighted multi-a
 
 $$\text{Overall Score} = \frac{1}{4} \left( S_{\text{novelty}} + S_{\text{rigor}} + S_{\text{fairness}} + S_{\text{reproducibility}} \right)$$
 
-* $S_{\text{novelty}} \in [1.0, 10.0]$: Mathematical originality and theoretical framing.
-* $S_{\text{rigor}} \in [1.0, 10.0]$: Empirical dataset coverage and statistical confidence.
-* $S_{\text{fairness}} \in [1.0, 10.0]$: Baseline parity across parameter and FLOP budgets.
-* $S_{\text{reproducibility}} \in [1.0, 10.0]$: Open-source code availability, weights, and hyperparameter disclosure.
+* $S_{\text{novelty}} \in [1.0, 9.8]$: Mathematical originality and theoretical framing ($S_{\text{novelty}} = \min(9.8, 8.2 + 0.5 \cdot \mathbb{I}_{\text{latex}})$).
+* $S_{\text{rigor}} \in [1.0, 9.5]$: Empirical dataset coverage and citation signals ($S_{\text{rigor}} = \min(9.5, 8.0 + \min(1.0, \text{citations}/2000))$).
+* $S_{\text{fairness}} \in [1.0, 9.0]$: Baseline parity across parameter and FLOP budgets ($S_{\text{fairness}} = \min(9.0, 7.8 + 0.4 \cdot \mathbb{I}_{\text{github}})$).
+* $S_{\text{reproducibility}} \in [1.0, 9.6]$: Open-source code availability and checkpoints ($S_{\text{reproducibility}} = \min(9.6, 8.4 + 0.8 \cdot \mathbb{I}_{\text{github}})$).
 
 ---
 
-*PaperPulse AI — System Architecture Specification.*
+## 4. Architectural Deep Dive Links
+
+For detailed, box-by-box breakdown and sequence flows, refer to:
+* 📖 **[Detailed Architecture Specification](file:///Users/siva/AI-codebase/PaperPulse_AI/DETAILED_ARCHITECTURE.md)**: Exhaustive breakdown of all internal pipelines, sequence charts, Vis.js physics parameters, and state machines.
+* 🛠️ **[Operations & Deployment Guide](file:///Users/siva/AI-codebase/PaperPulse_AI/OPERATIONS.md)**: Health probes, logging, and operational runbook.
+* 🧪 **[Test Suite Specifications](file:///Users/siva/AI-codebase/PaperPulse_AI/tests)**: 39 unit and integration tests covering all system layers.
+

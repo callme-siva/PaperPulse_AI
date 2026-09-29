@@ -36,12 +36,22 @@ def render_hero_header():
     render_topbar()
 
 
-def _score_ring_gradient(score: float, max_score: float = 10.0) -> str:
+def _score_ring_gradient(score: float, max_score: float = 10.0, accent: str = "#2563EB") -> str:
     pct = max(0, min(100, int((score / max_score) * 100)))
-    return f"conic-gradient({ACCENT} 0 {pct}%, #262A35 0 100%)"
+    return f"conic-gradient({accent} 0 {pct}%, rgba(128,128,128,0.2) 0 100%)"
 
 
 def render_metric_radar_chart(review: Dict[str, Any]):
+    from ui.theme_manager import THEMES, RUBRIC_CONSOLE
+    active_theme_name = st.session_state.get("ui_theme", "Rubric Console (Dark)")
+    theme = THEMES.get(active_theme_name, RUBRIC_CONSOLE)
+    is_dark = theme.get("is_dark", True)
+    
+    text_color = theme.get("text_primary", "#F1F3F9")
+    accent_color = theme.get("accent", "#2563EB" if not is_dark else "#7C9CFF")
+    grid_color = "rgba(100, 116, 139, 0.25)" if not is_dark else "rgba(142, 150, 171, 0.2)"
+    fill_color = f"rgba(37, 99, 235, 0.16)" if not is_dark else f"rgba(124, 156, 255, 0.2)"
+
     categories = ['Novelty', 'Empirical Rigor', 'Baseline Fairness', 'Reproducibility']
     values = [
         review.get('novelty_score', 8.0),
@@ -56,9 +66,9 @@ def render_metric_radar_chart(review: Dict[str, Any]):
         r=values_plot,
         theta=categories_plot,
         fill='toself',
-        fillcolor='rgba(124, 156, 255, 0.18)',
-        line=dict(color=ACCENT, width=2),
-        marker=dict(size=5, color=ACCENT)
+        fillcolor=fill_color,
+        line=dict(color=accent_color, width=2.5),
+        marker=dict(size=6, color=accent_color)
     ))
 
     fig.update_layout(
@@ -67,12 +77,12 @@ def render_metric_radar_chart(review: Dict[str, Any]):
                 visible=True,
                 range=[0, 10],
                 showline=False,
-                tickfont=dict(size=9, color="#8B90A0"),
-                gridcolor="rgba(139, 144, 160, 0.15)"
+                tickfont=dict(size=9, color=theme.get("text_secondary", "#8E96AB")),
+                gridcolor=grid_color
             ),
             angularaxis=dict(
-                tickfont=dict(size=11, color="#E7E9EE", family="Sora"),
-                gridcolor="rgba(139, 144, 160, 0.15)"
+                tickfont=dict(size=11, color=text_color, family="Sora"),
+                gridcolor=grid_color
             ),
             bgcolor='rgba(0,0,0,0)'
         ),
@@ -104,7 +114,7 @@ def render_paper_card(paper: Dict[str, Any], is_active: bool = False):
         <div>{''.join(chips)}</div>
         <h3>{paper.get('title')}</h3>
         <div class="rc-meta">{authors_str} · {paper.get('published_date', '')}</div>
-        <p style="font-size: 0.85rem; color: #8B90A0; line-height: 1.55; margin: 10px 0 0 0;">
+        <p class="rc-card-abstract">
             {abstract}{'...' if len(paper.get('abstract') or '') > 260 else ''}
         </p>
     </div>
@@ -133,17 +143,22 @@ def render_rubric_meter(label: str, score: float, max_score: float = 10.0, color
 
 
 def render_score_ring(overall_score: float, recommendation: str, summary: str):
-    gradient = _score_ring_gradient(overall_score)
+    from ui.theme_manager import THEMES, RUBRIC_CONSOLE
+    active_theme_name = st.session_state.get("ui_theme", "Rubric Console (Dark)")
+    theme = THEMES.get(active_theme_name, RUBRIC_CONSOLE)
+    accent = theme.get("accent", "#7C9CFF")
+    gradient = _score_ring_gradient(overall_score, accent=accent)
+
     st.markdown(f"""
     <div class="rc-verdict">
         <div style="display:flex; align-items:flex-start; gap:16px;">
             <div class="rc-ring" style="background:{gradient};"><span>{overall_score:.1f}</span></div>
             <div>
                 <div class="rec">{recommendation}</div>
-                <div style="font-size:0.85rem; color:#8B90A0; margin-top:2px;">Multi-agent rubric assessment, not a calibrated peer-review score</div>
+                <div class="rc-verdict-sub">Multi-agent rubric assessment, not a calibrated peer-review score</div>
             </div>
         </div>
-        <p style="font-size: 0.88rem; color: #E7E9EE; line-height: 1.55; margin: 14px 0 0 0;">{summary}</p>
+        <p class="rc-verdict-body">{summary}</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -167,39 +182,44 @@ def render_stat_tile(label: str, value: str):
 
 
 def style_benchmark_table(df):
-    """Pandas Styler matching the Rubric Console palette: green for positive gain, rust for negative."""
+    """Pandas Styler dynamically styled to match the active theme palette."""
+    from ui.theme_manager import THEMES, RUBRIC_CONSOLE
+    theme_name = st.session_state.get("ui_theme", "Rubric Console (Dark)")
+    theme = THEMES.get(theme_name, RUBRIC_CONSOLE)
+
     def _delta_color(v):
         try:
             v = float(v)
         except (TypeError, ValueError):
             return ""
         if v > 0:
-            return "color: #4ADE80; font-weight: 600;"
+            return f"color: {theme.get('good', '#16A34A')}; font-weight: 600;"
         if v < 0:
-            return "color: #E08A6F; font-weight: 600;"
-        return "color: #8B90A0;"
+            return f"color: {theme.get('critical', '#DC2626')}; font-weight: 600;"
+        return f"color: {theme.get('text_secondary', '#64748B')};"
 
     return (
         df.style
         .hide(axis="index")
         .set_properties(**{
-            "background-color": "#181B24",
-            "color": "#E7E9EE",
-            "border-color": "#262A35",
+            "background-color": theme["bg_card"],
+            "color": theme["text_primary"],
+            "border-color": theme["border"],
             "font-family": "Sora, sans-serif",
-            "padding": "8px 12px",
+            "padding": "10px 14px",
         })
         .map(_delta_color, subset=["Gain (Δ)"])
         .set_table_styles([
             {"selector": "th", "props": [
-                ("background-color", "#12141A"),
-                ("color", "#8B90A0"),
+                ("background-color", theme["bg_secondary"]),
+                ("color", theme["text_secondary"]),
                 ("font-family", "IBM Plex Mono, monospace"),
-                ("font-size", "0.72rem"),
+                ("font-size", "0.74rem"),
+                ("font-weight", "600"),
                 ("text-transform", "uppercase"),
                 ("letter-spacing", "0.04em"),
-                ("border-color", "#262A35"),
-                ("padding", "8px 12px"),
+                ("border-color", theme["border"]),
+                ("padding", "10px 14px"),
                 ("text-align", "left"),
             ]},
             {"selector": "table", "props": [
@@ -207,7 +227,7 @@ def style_benchmark_table(df):
                 ("width", "100%"),
             ]},
             {"selector": "td, th", "props": [
-                ("border-bottom", "1px solid #262A35"),
+                ("border-bottom", f"1px solid {theme['border']}"),
             ]},
         ])
     )
